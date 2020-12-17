@@ -74,7 +74,7 @@ module.exports.createNewBook = function (req, res, next) {
  * @param {import('express').Response} res
  * @param {import('express'.NextFunction)} next
  */
-module.exports = function (req, res, next) {
+module.exports.findById = function (req, res, next) {
   dbAdapter.query(
     `SELECT * FROM DAUSACH WHERE MADAUSACH=${req.params.id}`,
     function (error, data) {
@@ -84,6 +84,7 @@ module.exports = function (req, res, next) {
           .status(StatusCodes.INTERNAL_SERVER_ERROR)
           .json({ message: BookMessage.notFound });
       } else {
+        if (data.length === 0) return res.status(StatusCodes.NOT_FOUND).json();
         return res.status(StatusCodes.NOT_FOUND).json(data);
       }
     }
