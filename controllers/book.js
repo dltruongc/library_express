@@ -1,17 +1,21 @@
-const dbAdapter = require('../db.connector');
-const { StatusCodes } = require('http-status-codes');
-const { BookMessage } = require('../consts/message');
-const { Logger } = require('../consts/logger');
-
+const dbAdapter = require("../db.connector");
+const { StatusCodes } = require("http-status-codes");
+const { BookMessage, CommonMessage } = require("../consts/message");
+const { Logger } = require("../consts/logger");
+const { PageLimitation } = require("../consts/page.limitation");
 /**
  * @param {import('express').Request} req
  * @param {import('express').Response} res
  * @param {import('express'.NextFunction)} next
  */
 module.exports.getAllBooks = function (req, res, next) {
-  dbAdapter.query('SELECT * FROM SACH', function (error, data) {
+  if (Object.keys(req.query).length > 0) {
+    return next();
+  }
+
+  dbAdapter.query("SELECT * FROM SACH", function (error, data) {
     if (error) {
-      Logger.error('[Controller.Books.getAll]:', error.message);
+      Logger.error("[Controller.Books.getAll]:", error.message);
       return res
         .status(StatusCodes.INTERNAL_SERVER_ERROR)
         .json({ message: BookMessage.exception });
@@ -40,7 +44,7 @@ module.exports.createNewBook = function (req, res, next) {
   } = req.body;
   // FIXME: req.body AND dbAdapterQuery
   const fields =
-    'S_TIEUDE, S_SOTRANG, S_LANXUATBAN, S_TUKHOA, NXB, CDS_TEN, LS_MA, S_HINHANH';
+    "S_TIEUDE, S_SOTRANG, S_LANXUATBAN, S_TUKHOA, NXB, CDS_TEN, LS_MA, S_HINHANH";
 
   let query = dbAdapter.query(
     `INSERT IGNORE INTO NAM_XUAT_BAN VALUES (?); INSERT INTO SACH (${fields}) VALUES (?)`,
@@ -50,7 +54,7 @@ module.exports.createNewBook = function (req, res, next) {
         title,
         pages,
         version,
-        keywords.join(', '),
+        keywords.join(", "),
         nxb,
         category_id,
         type_id,
@@ -59,13 +63,12 @@ module.exports.createNewBook = function (req, res, next) {
     ],
     function (error, data) {
       if (error) {
-        Logger.log(error.sql);
-        Logger.error('[Controller.Books.create]', error.message);
+        Logger.error("[Controller.Books.create]", error.message);
         return res
           .status(StatusCodes.INTERNAL_SERVER_ERROR)
           .json({ message: BookMessage.createError });
       } else {
-        return res.status(StatusCodes.OK).json(data.insertId);
+        return res.status(StatusCodes.OK).json(data[1].insertId);
       }
     }
   );
@@ -81,7 +84,7 @@ module.exports.findById = function (req, res, next) {
     `SELECT * FROM SACH WHERE S_Ma=${req.params.id}`,
     function (error, data) {
       if (error) {
-        Logger.error('[Controller.Books.findOne:', error.message);
+        Logger.error("[Controller.Books.findOne:", error.message);
         return res
           .status(StatusCodes.INTERNAL_SERVER_ERROR)
           .json({ message: BookMessage.notFound });
@@ -91,4 +94,139 @@ module.exports.findById = function (req, res, next) {
       }
     }
   );
+};
+
+module.exports.getDetail = function (req, res, next) {
+  const { id } = req.params;
+  dbAdapter.query(
+    `SELECT * FROM SACH 
+      JOIN LOAI_SACH ls 
+        on SACH.LS_MA=ls.LS_MA, 
+      TAC_GIA 
+        WHERE S_Ma=${req.params.id}
+          AND TAC_GIA.TG_MA IN (
+            SELECT SANG_TAC.TG_MA 
+              FROM SANG_TAC 
+              WHERE SANG_TAC.S_MA = ${req.params.id})
+    `.replace(/\s+/g, " "),
+
+    function (error, data) {
+      if (error) {
+        Logger.error("[Controller.Books.getDetail:", error.message);
+        return res
+          .status(StatusCodes.INTERNAL_SERVER_ERROR)
+          .json({ message: BookMessage.notFound });
+      } else {
+        if (data.length === 0) return res.status(StatusCodes.NO_CONTENT).json();
+        return res.status(StatusCodes.OK).json(data[0]);
+      }
+    }
+  );
+};
+
+module.exports.countCopiesOfBook = function (req, res, next) {
+  const { id } = req.params;
+
+  const q = `SELECT COUNT(*) AS COPIES FROM DAU_SACH WHERE DAU_SACH.S_MA = ${id}`;
+
+  dbAdapter.query(q, function (error, data) {
+    if (error) {
+      Logger.error("[Controller.Books.countCopiesOfBook]", error);
+      return res
+        .status(StatusCodes.INTERNAL_SERVER_ERROR)
+        .json({ message: CommonMessage.exception, error });
+    } else {
+      return res.json({ count: data[0]?.COPIES });
+    }
+  });
+};
+
+module.exports.findBooksByCategory = function (req, res, next) {
+  const { category } = req.query;
+  if (!category) {
+    return next();
+  }
+
+  const q = `SELECT * FROM SACH WHERE SACH.CDS_TEN = '${category}' `;
+
+  dbAdapter.query(q, function (error, data) {
+    if (error) {
+      Logger.error("[Controller.Books.findBooksByCategory]", error);
+      return res
+        .status(StatusCodes.INTERNAL_SERVER_ERROR)
+        .json({ message: CommonMessage.exception, error });
+    } else {
+      return res.json(data);
+    }
+  });
+};
+
+module.exports.findBooksByType = function (req, res, next) {
+  const { type } = req.query;
+
+  if (!type) {
+    return next();
+  }
+
+  const q = `SELECT * FROM SACH WHERE SACH.LS_MA = '${type}' `;
+
+  dbAdapter.query(q, function (error, data) {
+    if (error) {
+      Logger.error("[Controller.Books.findBooksByTypes]", error);
+      return res
+        .status(StatusCodes.INTERNAL_SERVER_ERROR)
+        .json({ message: CommonMessage.exception, error });
+    } else {
+      return res.json(data);
+    }
+  });
+};
+
+module.exports.filterBooks = function (req, res, next) {
+  const { search } = req.query;
+
+  const q = `SELECT * FROM SACH WHERE SACH.S_TIEUDE LIKE '%${search}%' `;
+
+  dbAdapter.query(q, function (error, data) {
+    if (error) {
+      Logger.error("[Controller.Books.findBooksByTypes]", error);
+      return res
+        .status(StatusCodes.INTERNAL_SERVER_ERROR)
+        .json({ message: CommonMessage.exception, error });
+    } else {
+      return res.json(data);
+    }
+  });
+};
+
+module.exports.pagination = (req, res, next) => {
+  Logger.info("book pagination");
+
+  let { page } = req.params;
+
+  // if (!page) {
+  //   // res.redirect("./1");
+  // }
+
+  page = page * 1;
+  const offset = (page - 1) * PageLimitation;
+  console.log({
+    page,
+    offset,
+    limit: PageLimitation,
+  });
+  const q = `SELECT * FROM SACH LIMIT ${PageLimitation} OFFSET ${
+    (page - 1) * PageLimitation
+  };`;
+
+  dbAdapter.query(q, function (error, data) {
+    if (error) {
+      Logger.error("[Controller.Books.pagination]:", error.message);
+      return res
+        .status(StatusCodes.INTERNAL_SERVER_ERROR)
+        .json({ message: BookMessage.exception });
+    } else {
+      return res.status(StatusCodes.OK).json(data);
+    }
+  });
 };
