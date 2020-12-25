@@ -8,6 +8,7 @@ router
   .get(BookTypesController.getAll)
   .post(
     [
+      body('type_id').exists().isLength({ max: 5 }),
       body('type_name').exists().isLength({ max: 30 }),
       body('borrow_time').isNumeric(),
       Validation,

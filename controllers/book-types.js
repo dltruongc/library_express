@@ -9,7 +9,7 @@ const { CommonMessage } = require('../consts/message');
  * @param {import('express').NextFunction} next
  */
 module.exports.getAll = (req, res, next) => {
-  dbAdapter.query('SELECT * FROM THELOAI', function (error, data) {
+  dbAdapter.query('SELECT * FROM LOAI_SACH', function (error, data) {
     if (error) {
       Logger.error('[Controller.BookTypes.getAll]', error.message);
       return res
@@ -29,7 +29,7 @@ module.exports.getAll = (req, res, next) => {
  */
 module.exports.findById = (req, res, next) => {
   dbAdapter.query(
-    'SELECT * FROM THELOAI WHERE MATHELOAI=?',
+    'SELECT * FROM LOAI_SACH WHERE LS_MA=?',
     [req.params.id],
     function (error, data) {
       if (error) {
@@ -39,9 +39,9 @@ module.exports.findById = (req, res, next) => {
           .json({ message: CommonMessage.exception });
       } else {
         if (data.length === 0) {
-          return res.status(StatusCodes.NOT_FOUND).json();
+          return res.status(StatusCodes.NO_CONTENT).json();
         }
-        return res.json(data);
+        return res.json(data[0]);
       }
     }
   );
@@ -54,11 +54,11 @@ module.exports.findById = (req, res, next) => {
  * @param {import('express').NextFunction} next
  */
 module.exports.createNewBookType = (req, res, next) => {
-  const fields = 'TENTHELOAI, THOIHANMUON';
-  const { type_name, borrow_time } = req.body;
+  const fields = 'LS_MA, LS_TEN, LS_THOIHANMUON';
+  const { type_id, type_name, borrow_time } = req.body;
   dbAdapter.query(
-    `INSERT INTO THELOAI (${fields}) VALUES (?)`,
-    [[type_name, borrow_time]],
+    `INSERT INTO LOAI_SACH (${fields}) VALUES (?)`,
+    [[type_id, type_name, borrow_time]],
     function (error, data) {
       if (error) {
         Logger.error('[Controller.BookTypes.create]', error.message);

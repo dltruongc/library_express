@@ -10,7 +10,7 @@ const dbAdapter = require('../db.connector');
  * @param {import('express).NextFunction} next
  */
 module.exports.getAllCategories = function (req, res, next) {
-  dbAdapter.query('SELECT * FROM DANHMUC', function (error, data) {
+  dbAdapter.query('SELECT * FROM CHU_DE_SACH', function (error, data) {
     if (error) {
       Logger.error('[Controller.Category.getAll]', error.message);
       return res
@@ -30,7 +30,7 @@ module.exports.getAllCategories = function (req, res, next) {
  */
 module.exports.findById = function (req, res, next) {
   dbAdapter.query(
-    'SELECT * FROM DANHMUC WHERE MADANHMUC=?',
+    'SELECT * FROM CHU_DE_SACH WHERE CDS_TEN=?',
     [req.params.id],
     function (error, data) {
       if (error) {
@@ -39,8 +39,8 @@ module.exports.findById = function (req, res, next) {
           .status(StatusCodes.INTERNAL_SERVER_ERROR)
           .json({ message: CommonMessage.notFound });
       } else {
-        if (data.length === 0) return res.status(StatusCodes.NOT_FOUND).json();
-        return res.json(data);
+        if (data.length === 0) return res.status(StatusCodes.NO_CONTENT).json();
+        return res.json(data[0]);
       }
     }
   );
@@ -54,16 +54,16 @@ module.exports.findById = function (req, res, next) {
  * @description take *req.body.category_name* from `Request.Body`
  */
 module.exports.createNewCategory = function (req, res, next) {
-  const fields = 'TENDANHMUC';
+  const fields = 'CDS_TEN';
   dbAdapter.query(
-    `INSERT INTO DANHMUC (${fields}) VALUES (?)`,
+    `INSERT INTO CHU_DE_SACH (${fields}) VALUES (?)`,
     [[req.body.category_name]],
     function (error, data) {
       if (error) {
         Logger.error('[Controller.Category.create]', error.message);
         return res
           .status(StatusCodes.INTERNAL_SERVER_ERROR)
-          .json({ message: CommonMessage.notFound });
+          .json({ message: CommonMessage.exception });
       } else {
         return res.json(data.insertId);
       }

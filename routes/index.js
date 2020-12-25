@@ -5,5 +5,6 @@ router.use('/admin', require('./admin/index'));
 router.use('/books', require('./books'));
 router.use('/categories', require('./categories'));
 router.use('/types', require('./book-types'));
+router.use('/authors', require('./authors'));
 
 module.exports = router;
