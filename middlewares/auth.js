@@ -23,7 +23,7 @@ module.exports.authenticateToken = async function (req, res, next) {
     }
 
     dbAdapter.query(
-      `SELECT * FROM DOC_GIA WHERE DOC_GIA.CN_TENTAIKHOAN='${username}'`,
+      `SELECT * FROM NGUOI_DUNG WHERE NGUOI_DUNG.CN_TENTAIKHOAN='${username}'`,
       function (error, data) {
         if (error) {
           Logger.error("[Middleware.auth]", error);
@@ -31,6 +31,12 @@ module.exports.authenticateToken = async function (req, res, next) {
           return res
             .status(StatusCodes.INTERNAL_SERVER_ERROR)
             .json({ message: CommonMessage.exception });
+        }
+
+        if (data.length > 0) {
+          const user = data.find((item) => item.QT_NGAYNHANVIEC !== null);
+          req.user = user;
+          return next();
         }
 
         req.user = data[0];

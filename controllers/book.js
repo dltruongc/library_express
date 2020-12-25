@@ -3,6 +3,8 @@ const { StatusCodes } = require("http-status-codes");
 const { BookMessage, CommonMessage } = require("../consts/message");
 const { Logger } = require("../consts/logger");
 const { PageLimitation } = require("../consts/page.limitation");
+const dateFormat = require("dateformat");
+
 /**
  * @param {import('express').Request} req
  * @param {import('express').Response} res
@@ -232,4 +234,24 @@ module.exports.pagination = (req, res, next) => {
       return res.status(StatusCodes.OK).json(data);
     }
   });
+};
+
+module.exports.generateCopyOfBook = function (req, res, next) {
+  const { book_id } = req.body;
+  const thisDate = dateFormat(new Date(), "yyyy-mm-dd");
+
+  dbAdapter.query(
+    `INSERT INTO DAU_SACH (S_MA, DS_NGAYTAO) VALUES (?)`,
+    [[book_id, thisDate]],
+    function (error, data) {
+      if (error) {
+        Logger.error("[Controller.Books.generateCopyOfBook]:", error.message);
+        return res
+          .status(StatusCodes.INTERNAL_SERVER_ERROR)
+          .json({ message: BookMessage.exception });
+      } else {
+        return res.status(StatusCodes.OK).json(data.insertId);
+      }
+    }
+  );
 };

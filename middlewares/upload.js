@@ -5,13 +5,14 @@ const Resize = require("../utils/Resize");
 const path = require("path");
 
 module.exports.UploadImageHandle = async function (req, res, next) {
-  // folder upload
-  const imagePath = path.join(__dirname, "..", "public");
-  // call class Resize
-  const fileUpload = new Resize(imagePath, req.file.originalname.split(".")[0]);
   if (!req.file) {
     return res.status(401).json({ error: "Hãy chọn một bức ảnh" });
   }
+
+  const imagePath = path.join(__dirname, "..", "public");
+
+  const fileUpload = new Resize(imagePath, req.file.originalname.split(".")[0]);
+
   try {
     const filename = await fileUpload.save(req.file.buffer);
     Object.assign(req.body, { image: filename });

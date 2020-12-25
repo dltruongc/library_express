@@ -4,15 +4,12 @@ const { CommonMessage } = require("../consts/message");
 const { Logger } = require("../consts/logger");
 const { BcryptProvider } = require("../providers/bcrypt");
 const generateAccessToken = require("../providers/jwt");
-/**
- * @param {import('express').Request} req
- * @param {import('express').Response} res
- * @param {import('express'.NextFunction)} next
- */
-module.exports.getAllUsers = function (req, res, next) {
-  dbAdapter.query("SELECT * FROM DOC_GIA", function (error, data) {
+const dateFormat = require("dateformat");
+
+module.exports.getAllStaffs = function (req, res, next) {
+  dbAdapter.query("SELECT * FROM QUAN_THU", function (error, data) {
     if (error) {
-      Logger.error("[Controller.User.getAll]:", error.message);
+      Logger.error("[Controller.Admin.Staff.getAll]:", error.message);
       return res
         .status(StatusCodes.INTERNAL_SERVER_ERROR)
         .json({ message: CommonMessage.exception });
@@ -22,18 +19,13 @@ module.exports.getAllUsers = function (req, res, next) {
   });
 };
 
-/**
- * @param {import('express').Request} req
- * @param {import('express').Response} res
- * @param {import('express'.NextFunction)} next
- */
-module.exports.findUserById = function (req, res, next) {
+module.exports.findStaffById = function (req, res, next) {
   const { id } = req.params;
   dbAdapter.query(
-    `SELECT * FROM DOC_GIA WHERE DG_MA = ${id}`,
+    `SELECT * FROM QUAN_THU WHERE QT_MA = ${id}`,
     function (error, data) {
       if (error) {
-        Logger.error("[Controller.User.getAll]:", error.message);
+        Logger.error("[Controller.Admin.Staff.getAll]:", error.message);
         return res
           .status(StatusCodes.INTERNAL_SERVER_ERROR)
           .json({ message: BookMessage.exception });
@@ -47,12 +39,7 @@ module.exports.findUserById = function (req, res, next) {
   );
 };
 
-/**
- * @param {import('express').Request} req
- * @param {import('express').Response} res
- * @param {import('express'.NextFunction)} next
- */
-module.exports.createNewUser = async function (req, res, next) {
+module.exports.createNewStaff = async function (req, res, next) {
   const {
     name,
     phone,
@@ -62,13 +49,16 @@ module.exports.createNewUser = async function (req, res, next) {
     username,
     password,
     image,
+    worked_at,
   } = req.body;
+
+  const worked_date = worked_at ?? new Date();
 
   const { cipher, salt } = await BcryptProvider.hashPassword(password);
   const hashedPassword = cipher;
 
   dbAdapter.query(
-    `SELECT * FROM DOC_GIA WHERE DOC_GIA.CN_TENTAIKHOAN='${username}'`,
+    `SELECT * FROM QUAN_THU WHERE QUAN_THU.CN_TENTAIKHOAN='${username}'`,
     function (error, data) {
       if (error) {
         return res
@@ -83,7 +73,7 @@ module.exports.createNewUser = async function (req, res, next) {
       }
 
       dbAdapter.query(
-        `INSERT INTO DOC_GIA (CN_TEN, CN_SDT, CN_EMAIL, CN_NAM, CN_DIACHI, CN_TENTAIKHOAN, CN_MATKHAU, CN_SALT, CN_ANHDAIDIEN) VALUES (?)`,
+        `INSERT INTO QUAN_THU (CN_TEN, CN_SDT, CN_EMAIL, CN_NAM, CN_DIACHI, CN_TENTAIKHOAN, CN_MATKHAU, CN_SALT, CN_ANHDAIDIEN, QT_NGAYNHANVIEC) VALUES (?)`,
         [
           [
             name,
@@ -95,12 +85,13 @@ module.exports.createNewUser = async function (req, res, next) {
             hashedPassword,
             salt,
             image,
+            worked_date,
           ],
         ],
         function (error, data) {
           if (error) {
             console.log(error.sql);
-            Logger.error("[Controller.User.createNew]:", error.message);
+            Logger.error("[Controller.Admin.Staff.createNew]:", error.message);
             return res
               .status(StatusCodes.INTERNAL_SERVER_ERROR)
               .json({ message: CommonMessage.exception });
@@ -122,7 +113,7 @@ module.exports.login = async function (req, res, next) {
   const { username, password } = req.body;
 
   dbAdapter.query(
-    `SELECT * FROM DOC_GIA WHERE DOC_GIA.CN_TENTAIKHOAN='${username}'`,
+    `SELECT * FROM QUAN_THU WHERE QUAN_THU.CN_TENTAIKHOAN='${username}'`,
     async function (error, data) {
       if (error) {
         return res

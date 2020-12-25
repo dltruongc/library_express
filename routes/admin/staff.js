@@ -1,27 +1,28 @@
 const router = require("express").Router();
 const { body } = require("express-validator");
-const AuthController = require("../controllers/user");
-const { Validation } = require("../middlewares/common");
-const { MulterMiddleWare } = require("../middlewares/multer");
-const { UploadImageHandle } = require("../middlewares/upload");
+const StaffController = require("../../controllers/staff");
+const { Validation } = require("../../middlewares/common");
+const { MulterMiddleWare } = require("../../middlewares/multer");
+const { UploadImageHandle } = require("../../middlewares/upload");
 
 router.post("/signup", MulterMiddleWare.single("avatar"), UploadImageHandle, [
   body("name").isString().isLength({ max: 50 }),
-  body("phone").isLength({ max: 12 }),
-  body("email").isString(),
+  body("phone").notEmpty().isLength({ max: 12 }),
+  body("email").notEmpty(),
   body("gender").isBoolean(),
   body("address").isString(),
   body("username").notEmpty().isLength({ max: 32 }),
   body("password").notEmpty(),
+  body("worked_at").optional().isDate(),
   Validation,
-  AuthController.createNewUser,
+  StaffController.createNewStaff,
 ]);
 
 router.post("/signin", [
   body("username").notEmpty(),
   body("password").notEmpty(),
   Validation,
-  AuthController.login,
+  StaffController.login,
 ]);
 
 module.exports = router;

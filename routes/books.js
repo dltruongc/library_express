@@ -31,6 +31,13 @@ router
 router.route("/page/:page").get(BookController.pagination);
 
 router
+  .route("/copy")
+  .post(
+    [body("book_id").notEmpty(), Validation],
+    BookController.generateCopyOfBook
+  );
+
+router
   .route("/details/:id")
   .get(
     [

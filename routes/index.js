@@ -5,7 +5,8 @@ router.use("/admin", require("./admin/index"));
 router.use("/books", require("./books"));
 router.use("/categories", require("./categories"));
 router.use("/types", require("./book-types"));
-router.use("/authors", require("./authors"));
+router.use("/authors", authenticateToken, require("./authors"));
 router.use("/auth", require("./auth"));
+router.use("/member-cards", require("./member.card"));
 
 module.exports = router;
