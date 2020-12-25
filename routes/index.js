@@ -1,10 +1,11 @@
-var express = require('express');
+var express = require("express");
 var router = express.Router();
-
-router.use('/admin', require('./admin/index'));
-router.use('/books', require('./books'));
-router.use('/categories', require('./categories'));
-router.use('/types', require('./book-types'));
-router.use('/authors', require('./authors'));
+const { authenticateToken } = require("../middlewares/auth");
+router.use("/admin", require("./admin/index"));
+router.use("/books", require("./books"));
+router.use("/categories", require("./categories"));
+router.use("/types", require("./book-types"));
+router.use("/authors", require("./authors"));
+router.use("/auth", require("./auth"));
 
 module.exports = router;

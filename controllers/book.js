@@ -118,7 +118,10 @@ module.exports.getDetail = function (req, res, next) {
           .json({ message: BookMessage.notFound });
       } else {
         if (data.length === 0) return res.status(StatusCodes.NO_CONTENT).json();
-        return res.status(StatusCodes.OK).json(data[0]);
+        let bookDetail = { ...data[0] };
+        bookDetail.TG_MA = data.map((item) => item.TG_MA);
+        bookDetail.TG_TEN = data.map((item) => item.TG_TEN);
+        return res.status(StatusCodes.OK).json(bookDetail);
       }
     }
   );

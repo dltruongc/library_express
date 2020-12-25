@@ -1,16 +1,15 @@
-const bcrypt = require('bcryptjs');
-const { Logger } = require('../consts/logger');
+const bcrypt = require("bcryptjs");
+const { Logger } = require("../consts/logger");
 
 async function hashPassword(pwd) {
   try {
     const salt = await bcrypt.genSalt();
     const cipher = await bcrypt.hash(pwd, salt);
+    return { cipher, salt };
   } catch (err) {
-    Logger.err('[Provider.HashPassword]', err);
+    Logger.error("[Provider.HashPassword]", err);
     return {};
   }
-
-  return { cipher, salt };
 }
 
 async function comparePassword(text, salt, pwd) {
@@ -18,7 +17,7 @@ async function comparePassword(text, salt, pwd) {
     const generatedPassword = await bcrypt.hash(text, salt);
     return generatedPassword === pwd;
   } catch (err) {
-    Logger.err('[Provider.ComparePassword]', err);
+    Logger.error("[Provider.ComparePassword]", err);
     throw new Exception(err);
   }
 }
