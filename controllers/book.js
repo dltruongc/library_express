@@ -255,3 +255,26 @@ module.exports.generateCopyOfBook = function (req, res, next) {
     }
   );
 };
+
+module.exports.writenByAuthors = function (req, res, next) {
+  const { authors, id_book } = req.body;
+
+  let q = "INSERT INTO SANG_TAC (S_MA, TG_MA) VALUES ";
+
+  authors.forEach((author) => {
+    q = q + `(${id_book}, ${author}), `;
+  });
+
+  q = q.trim().replace(/.$/, ";");
+
+  dbAdapter.query(q, function (error, data) {
+    if (error) {
+      Logger.error("[Controller.Books.writtenByAuthors]:", error.message);
+      return res
+        .status(StatusCodes.INTERNAL_SERVER_ERROR)
+        .json({ message: BookMessage.exception });
+    } else {
+      return res.status(StatusCodes.OK).json(data.insertId);
+    }
+  });
+};

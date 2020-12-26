@@ -1,15 +1,15 @@
-const dbAdapter = require("../db.connector");
-const { StatusCodes } = require("http-status-codes");
-const { CommonMessage } = require("../consts/message");
-const { Logger } = require("../consts/logger");
-const { BcryptProvider } = require("../providers/bcrypt");
-const generateAccessToken = require("../providers/jwt");
-const dateFormat = require("dateformat");
+const dbAdapter = require('../db.connector');
+const { StatusCodes } = require('http-status-codes');
+const { CommonMessage } = require('../consts/message');
+const { Logger } = require('../consts/logger');
+const { BcryptProvider } = require('../providers/bcrypt');
+const generateAccessToken = require('../providers/jwt');
+const dateFormat = require('dateformat');
 
 module.exports.getAllStaffs = function (req, res, next) {
-  dbAdapter.query("SELECT * FROM QUAN_THU", function (error, data) {
+  dbAdapter.query('SELECT * FROM QUAN_THU', function (error, data) {
     if (error) {
-      Logger.error("[Controller.Admin.Staff.getAll]:", error.message);
+      Logger.error('[Controller.Admin.Staff.getAll]:', error.message);
       return res
         .status(StatusCodes.INTERNAL_SERVER_ERROR)
         .json({ message: CommonMessage.exception });
@@ -25,7 +25,7 @@ module.exports.findStaffById = function (req, res, next) {
     `SELECT * FROM QUAN_THU WHERE QT_MA = ${id}`,
     function (error, data) {
       if (error) {
-        Logger.error("[Controller.Admin.Staff.getAll]:", error.message);
+        Logger.error('[Controller.Admin.Staff.getAll]:', error.message);
         return res
           .status(StatusCodes.INTERNAL_SERVER_ERROR)
           .json({ message: BookMessage.exception });
@@ -91,7 +91,7 @@ module.exports.createNewStaff = async function (req, res, next) {
         function (error, data) {
           if (error) {
             console.log(error.sql);
-            Logger.error("[Controller.Admin.Staff.createNew]:", error.message);
+            Logger.error('[Controller.Admin.Staff.createNew]:', error.message);
             return res
               .status(StatusCodes.INTERNAL_SERVER_ERROR)
               .json({ message: CommonMessage.exception });
@@ -144,6 +144,28 @@ module.exports.login = async function (req, res, next) {
       }
 
       return res.json({ token: generateAccessToken(dbUsername, id) });
+    }
+  );
+};
+
+module.exports.confirmBorrowRequest = function (req, res, next) {
+  const { borrow_card_id, copy_book_id } = req.body;
+  const staff_id = req.staff.QT_MA;
+
+  let q = `INSERT INTO DON_XAC_NHAN (DS_MA, PM_STT, CN_MA) VALUES (?);`;
+
+  dbAdapter.query(
+    q,
+    [[copy_book_id, borrow_card_id, staff_id]],
+    function (error, data) {
+      if (error) {
+        console.error('Lỗi Đơn xác nhận: ', error);
+        return res
+          .status(StatusCodes.INTERNAL_SERVER_ERROR)
+          .json({ message: CommonMessage.exception, error });
+      } else {
+        return res.json(data.insertId);
+      }
     }
   );
 };
